@@ -51,10 +51,21 @@ public class FeedRetentionWorkflowBuilder extends OozieOrchestrationWorkflowBuil
     @Override public Properties build(Cluster cluster, Path buildPath) throws FalconException {
         WORKFLOWAPP workflow = new WORKFLOWAPP();
         String wfName = EntityUtil.getWorkflowName(Tag.RETENTION, entity).toString();
+
         //Add eviction action
         ACTION eviction = unmarshalAction(EVICTION_ACTION_TEMPLATE);
+        addTransition(eviction, SUCCESS_POSTPROCESS_ACTION_NAME, FAIL_POSTPROCESS_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(eviction);
 
-        addPostProcessing(workflow, eviction);
+        //Add post-processing actions
+        ACTION success = getSuccessPostProcessAction();
+        addTransition(success, OK_ACTION_NAME, FAIL_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(success);
+
+        ACTION fail = getFailPostProcessAction();
+        addTransition(fail, FAIL_ACTION_NAME, FAIL_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(fail);
+
         decorateWorkflow(workflow, wfName, EVICTION_ACTION_NAME);
         addLibExtensionsToWorkflow(cluster, workflow, Tag.RETENTION);
 
