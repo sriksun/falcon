@@ -59,27 +59,19 @@ public final class AgeBasedWorkflowBuilder {
 
         //Add eviction action
         ACTION eviction = OozieBuilderUtils.unmarshalAction(EVICTION_ACTION_TEMPLATE);
+        OozieBuilderUtils.addTransition(eviction, OozieBuilderUtils.SUCCESS_POSTPROCESS_ACTION_NAME,
+                OozieBuilderUtils.FAIL_POSTPROCESS_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(eviction);
 
-        if (!Boolean.parseBoolean(OozieBuilderUtils.ENABLE_POSTPROCESSING)){
-            OozieBuilderUtils.addTransition(eviction, OozieBuilderUtils.OK_ACTION_NAME,
-                    OozieBuilderUtils.FAIL_ACTION_NAME);
-            workflow.getDecisionOrForkOrJoin().add(eviction);
-        } else {
-            OozieBuilderUtils.addTransition(eviction, OozieBuilderUtils.SUCCESS_POSTPROCESS_ACTION_NAME,
-                    OozieBuilderUtils.FAIL_POSTPROCESS_ACTION_NAME);
-            workflow.getDecisionOrForkOrJoin().add(eviction);
+        //Add post-processing actions
+        ACTION success = OozieBuilderUtils.getSuccessPostProcessAction();
+        OozieBuilderUtils.addTransition(success, OozieBuilderUtils.OK_ACTION_NAME, OozieBuilderUtils.FAIL_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(success);
 
-            //Add post-processing actions
-            ACTION success = OozieBuilderUtils.getSuccessPostProcessAction();
-            OozieBuilderUtils.addTransition(success, OozieBuilderUtils.OK_ACTION_NAME,
-                    OozieBuilderUtils.FAIL_ACTION_NAME);
-            workflow.getDecisionOrForkOrJoin().add(success);
+        ACTION fail = OozieBuilderUtils.getFailPostProcessAction();
+        OozieBuilderUtils.addTransition(fail, OozieBuilderUtils.FAIL_ACTION_NAME, OozieBuilderUtils.FAIL_ACTION_NAME);
+        workflow.getDecisionOrForkOrJoin().add(fail);
 
-            ACTION fail = OozieBuilderUtils.getFailPostProcessAction();
-            OozieBuilderUtils.addTransition(fail, OozieBuilderUtils.FAIL_ACTION_NAME,
-                    OozieBuilderUtils.FAIL_ACTION_NAME);
-            workflow.getDecisionOrForkOrJoin().add(fail);
-        }
         OozieBuilderUtils.decorateWorkflow(workflow, wfName, EVICTION_ACTION_NAME);
         OozieBuilderUtils.addLibExtensionsToWorkflow(cluster, workflow, Tag.RETENTION, EntityType.FEED);
 
