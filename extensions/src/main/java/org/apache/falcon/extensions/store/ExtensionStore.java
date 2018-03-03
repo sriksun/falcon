@@ -151,14 +151,16 @@ public final class ExtensionStore {
 
             for (FileStatus fileStatus : files) {
                 if (fileStatus.getPath().getName().equalsIgnoreCase(LIBS_DIR)) {
+                    if (fileStatus.getLen() != 0) {
                         libsPath = Path.getPathWithoutSchemeAndAuthority(fileStatus.getPath());
+                    }
                     break;
                 }
             }
 
             if (libsPath == null) {
                 LOG.info("For extension " + extensionName + " there is no "
-                        + LIBS_DIR + "at the extension store path " + extensionPath);
+                        + LIBS_DIR + "at the extension store path " + storePath);
                 return null;
             } else {
                 return libsPath.toString();
